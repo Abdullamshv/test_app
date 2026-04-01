@@ -41,7 +41,7 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/paywall');
+                    Navigator.pushNamed(context, '/paywall');
                   },
                   child: const Text('Продолжить', style: TextStyle(fontSize: 18)),
                 ),

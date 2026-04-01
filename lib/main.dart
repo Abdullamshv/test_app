@@ -1,50 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/subscription_cubit.dart';
 
-class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+import 'cubit/subscription_cubit.dart';
+import 'cubit/subscription_state.dart';
+import 'screens/main.dart';
+import 'screens/onboarding.dart';
+import 'screens/paywall.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Главная'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Сбросить подписку (для теста)',
-            onPressed: () async {
-              // Очищаем кэш через бизнес-логику Cubit
-              await context.read<SubscriptionCubit>().resetSubscription();
-              
-              // Поскольку RootScreen слушает изменения, нам не обязательно
-              // делать Navigator.pushReplacement. Если этот экран показан через RootScreen,
-              // он обновится сам. Но если мы использовали push, нужно сбросить стек:
-              if (!context.mounted) return;
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-          )
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.star_rounded, size: 80, color: Colors.amber),
-            const SizedBox(height: 16),
-            Text(
-              'Спасибо за покупку!',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Весь премиум контент теперь доступен.',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ],
+    // Предоставляем Cubit всему дереву виджетов
+    return BlocProvider(
+      create: (context) => SubscriptionCubit(),
+      child: MaterialApp(
+        title: 'Paywall App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
         ),
+        // Корневой виджет сам решит, что показать, опираясь на стейт
+        home: const RootScreen(),
+        routes: {
+          '/paywall': (context) => const PaywallScreen(),
+          '/main': (context) => const MainScreen(),
+        },
       ),
+    );
+  }
+}
+
+// Умный виджет, который слушает состояние Cubit и переключает экраны
+class RootScreen extends StatelessWidget {
+  const RootScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SubscriptionCubit, SubscriptionState>(
+      builder: (context, state) {
+        if (state is SubscriptionLoading || state is SubscriptionInitial) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (state is SubscriptionActive) {
+          return const MainScreen();
+        } else {
+          return const OnboardingScreen();
+        }
+      },
     );
   }
 }

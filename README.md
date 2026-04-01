@@ -1,17 +1,42 @@
-# test_app
+# Paywall Test App
 
-A new Flutter project.
+Простое и легковесное Flutter-приложение, демонстрирующее флоу покупки подписки. Включает в себя экраны онбординга, пейвола (с сохранением выбранного тарифа) и главного экрана, доступного только после "покупки". 
 
-## Getting Started
+Состояние подписки и выбранный тариф сохраняются локально, обеспечивая бесшовный опыт при повторных запусках приложения.
 
-This project is a starting point for a Flutter application.
+## 🏗 Архитектура
 
-A few resources to get you started if this is your first Flutter project:
+В проекте используется упрощенный подход **Clean Architecture** с фокусом на разделение бизнес-логики и UI:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+* **State Management:** Управление состоянием реализовано с помощью `Cubit` (пакет `flutter_bloc`). Это позволяет изолировать логику проверки и оформления подписки от визуальной части.
+* **State-driven UI:** Навигация основана на состоянии. Корневой виджет `RootScreen` слушает изменения в `SubscriptionCubit` и автоматически переключает экраны (Onboarding <-> MainScreen) без необходимости ручного управления стеком навигации (`Navigator.push/pop`).
+* **Локальное хранилище:** Для эмуляции бэкенда и сохранения состояния используется `shared_preferences`.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📂 Структура проекта
+
+Код логически разделен на директории для удобства масштабирования:
+
+```text
+lib/
+├── cubit/
+│   ├── subscription_cubit.dart  # Бизнес-логика (покупка, сброс, проверка статуса)
+│   └── subscription_state.dart  # Состояния подписки (Loading, Active, Inactive)
+├── screens/
+│   ├── main.dart                # Главный экран (доступен по подписке)
+│   ├── onboarding.dart          # Приветственный экран
+│   └── paywall.dart             # Экран покупки с логикой выбора тарифа
+├── widgets/
+│   └── subscription.dart        # Переиспользуемый UI-компонент карточки тарифа
+└── main.dart                    # Точка входа, инициализация DI/провайдеров и RootScreen
+🚀 Что бы я улучшил (при наличии большего времени)
+Для вывода приложения в полноценный Production я бы внедрил следующие решения:
+
+Слой репозиториев и DI: Вынес бы прямые вызовы SharedPreferences из Cubit в отдельный SubscriptionRepository. Настроил бы Dependency Injection (через get_it + injectable), чтобы легко подменять локальный кэш на реальные сетевые запросы.
+
+Интеграция RevenueCat: Заменил бы эмуляцию покупки на реальный биллинг через SDK RevenueCat (или Adapty), а также добавил бы обязательную для сторов кнопку "Restore Purchases".
+
+Современный Роутинг: Перевел бы навигацию с базового Navigator на go_router для удобной работы с Deep Links (например, для пуш-уведомлений со скидкой на подписку).
+
+Локализация и Дизайн-система: Вынес бы хардкод-строки в .arb файлы (l10n), а цвета и стили текста — в единый файл темы (ThemeExtension), чтобы упростить поддержку и возможный ребрендинг.
+
+Аналитика и A/B тесты: Подключил бы Firebase Analytics для отслеживания воронки продаж и Firebase Remote Config для возможности на лету менять цены и тексты на экране Paywall.

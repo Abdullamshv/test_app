@@ -1,5 +1,7 @@
+// lib/screens/main.dart
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/subscription_cubit.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -14,11 +16,13 @@ class MainScreen extends StatelessWidget {
             icon: const Icon(Icons.logout),
             tooltip: 'Сбросить подписку (для теста)',
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
+              // 1. Сбрасываем подписку через Cubit!
+              await context.read<SubscriptionCubit>().resetSubscription();
               
               if (!context.mounted) return;
-              Navigator.pushReplacementNamed(context, '/onboarding');
+              
+              // 2. Возвращаемся в корень (RootScreen сам покажет Onboarding)
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
           )
         ],
